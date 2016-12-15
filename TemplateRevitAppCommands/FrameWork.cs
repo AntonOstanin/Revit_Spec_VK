@@ -13,11 +13,6 @@ namespace Revit_Spec_VK
 {
     public class FrameWork
     {
-
-        public void GetVasya()
-        {
-
-        }
         public string GetParameterValue(Parameter par)
         {
             string value = par.AsValueString();
