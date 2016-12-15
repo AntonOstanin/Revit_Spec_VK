@@ -14,6 +14,10 @@ namespace Revit_Spec_VK
     public class FrameWork
     {
 
+        public void GetVasya()
+        {
+
+        }
         public string GetParameterValue(Parameter par)
         {
             string value = par.AsValueString();
@@ -23,7 +27,7 @@ namespace Revit_Spec_VK
                     value = Math.Round(par.AsDouble()*304.8,1).ToString();                   
                     break;
 
-                //case StorageType.ElementId:
+                //case StorageType.ElementId:///
                 //    ElementId id = t.AsElementId(fp);
                 //    Element e = doc.get_Element(ref id);
                 //    value = id.Value.ToString() + " ("
