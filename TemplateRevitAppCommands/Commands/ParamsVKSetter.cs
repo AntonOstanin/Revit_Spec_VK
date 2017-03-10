@@ -22,9 +22,19 @@ namespace Revit_Spec_VK
 {
     [TransactionAttribute(TransactionMode.Manual)]
     [RegenerationAttribute(RegenerationOption.Manual)]
-    public class ExternalCommands : IExternalCommand
+    public class ParamsVKSetter : IExternalCommand
     {
         public static List<ErrorMessage> errorMessages = new List<ErrorMessage>();
+
+
+
+        string pathToSpecExcel = @"\\dsk2.picompany.ru\project\CAD_Settings\Revit_server\03. Project Templates\04. Водоснабжение_канализация\Спецификация\Спецификации_ВК.xlsx";
+        string pathToSpecRDExcel = @"\\dsk2.picompany.ru\project\CAD_Settin
+gs\Revit_server\03. Project Templates\04. Водоснабжение_канализация\Спецификация\Спецификации_R&D.xlsx";
+        string pathToUserExcel = @"\\dsk2.picompany.ru\project\CAD_Settings\Revit_server\03. Project Templates\04. Водоснабжение_канализация\Спецификация\Users_Spec_VK.xlsx";
+        string localPathExcel = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\Спецификации_ВК.xlsx";
+        string localPathUserExcel = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\ЮЗвери_ВК.xlsx";
+
 
         public Result Execute(ExternalCommandData commandData, ref string message, Autodesk.Revit.DB.ElementSet elements)
         {
@@ -34,29 +44,18 @@ namespace Revit_Spec_VK
             FrameWork fw = new FrameWork();
             UIApplication appRevit = commandData.Application;
             Document doc = appRevit.ActiveUIDocument.Document;
-            if (Environment.UserName != "ostaninam")
-            {
-                try
-                {
-                    C_PluginStatisticTableAdapter pg = new C_PluginStatisticTableAdapter();
-                    pg.Insert("Revit", "Спецификация ВК", FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion,
-                        appRevit.ActiveUIDocument.Document.Title,
-                        Environment.UserName, DateTime.Now);
-                }
-                catch { }
-            }
-            string pathToSpecExcel = @"\\dsk2.picompany.ru\project\CAD_Settings\Revit_server\03. Project Templates\04. Водоснабжение_канализация\Спецификация\Спецификации_ВК.xlsx";
-            string pathToSpecRDExcel = @"\\dsk2.picompany.ru\project\CAD_Settings\Revit_server\03. Project Templates\04. Водоснабжение_канализация\Спецификация\Спецификации_R&D.xlsx";
-            string pathToUserExcel = @"\\dsk2.picompany.ru\project\CAD_Settings\Revit_server\03. Project Templates\04. Водоснабжение_канализация\Спецификация\Users_Spec_VK.xlsx";
-            string localPathExcel = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\Спецификации_ВК.xlsx";
-            string localPathUserExcel = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\ЮЗвери_ВК.xlsx";
+            PluginStatistic.Writer.WriteRunToDB("Revit", "R4.01_Спецификация ВК", "",
+                                      FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion, appRevit.ActiveUIDocument.Document.Title, false);
+         
+
+
             //    File.Copy(pathToSpecExcel, localPathExcel, true);
             File.Copy(pathToUserExcel, localPathUserExcel, true);
             var usersRD = fw.GetUsersRD(localPathUserExcel);
             if (usersRD.Any(x => x.Equals(Environment.UserName.ToLower())))
                 pathToSpecExcel = pathToSpecRDExcel;
             File.Copy(pathToSpecExcel, localPathExcel, true);
-            var vkExcelElements = fw.GetVkElements(localPathExcel).GroupBy(x => x.CategoryName).Select(x => new { CategoryName = x.Key, VkElements = x.ToList() }).ToList();//.GroupBy(x => x.CategoryName).Select(g => g.ToList()).ToList();
+            var vkExcelElements = fw.GetVkElements(localPathExcel).GroupBy(x => x.CategoryName).Select(x => new { CategoryName = x.Key, VkElements = x.ToList() }).ToList();
             var allElements = new FilteredElementCollector(doc).WhereElementIsNotElementType().Where(x => (x.Category != null)).ToList();
             var neededElements = allElements.Where(element => vkExcelElements.Any(x => x.CategoryName.Equals(element.Category.Name))).GroupBy(x => x.Category.Name).Select(x => new
              {
@@ -65,22 +64,8 @@ namespace Revit_Spec_VK
              }).ToList();
 
             var paramCatInfos = fw.GetParameterCategories(localPathExcel);
-
-
-
-
-
             var allPypes = allElements.Where(x => x.Category.Name.Equals("Трубы")).ToList();
-
             var pipeInfos = fw.GetPipeInfo(localPathExcel);
-
-
-
-
-
-
-
-
             using (Transaction tr = new Transaction(doc, "Спецификация ВК"))
             {
                 tr.Start();
@@ -139,6 +124,8 @@ namespace Revit_Spec_VK
 
                             if (vkEl.BS_Name != "" && !vkEl.BS_Name.Equals(GetParameter(needEl, "BS_Наименование")))     //BS_Наименование
                                 continue;
+                            if (vkEl.SystemType != "" && !vkEl.SystemType.Equals(GetParameter(needEl, "Тип системы")))     //Тип системы
+                                continue;
 
 
                             if (vkEl.FamilyName != "")           //Имя семейства
@@ -155,9 +142,9 @@ namespace Revit_Spec_VK
 
                         if (vkOverlap.Count > 1)
                         {
-                            vkOverlap = vkOverlap.Where(x => x.BS_Name != "" | x.FamilyName != "" | x.FormulaParameter.Equals(" ")).ToList();
+                            vkOverlap = vkOverlap.Where(x => x.BS_Name != "" || x.FamilyName != "" || x.SystemType != "" || x.FormulaParameter.Equals(" ")).ToList();
                             if (vkOverlap.Count > 1)
-                                vkOverlap = vkOverlap.Where(x => x.FamilyName != "").ToList();
+                                vkOverlap = vkOverlap.Where(x => x.SystemType != "").ToList();
                         }
 
 
@@ -191,7 +178,10 @@ namespace Revit_Spec_VK
                 string size = pipe.LookupParameter("Размер").AsString();
                 var p = pipeInfos.Where(x => x.Type.Equals(type) && x.Size.Equals(size)).ToList();
                 if (p.Count == 0)
+                {
+                    pipe.LookupParameter("MEP_t_стенки").Set("");
                     continue;
+                }
 
                 if (pipe.LookupParameter("MEP_t_стенки") == null) continue;
                 pipe.LookupParameter("MEP_t_стенки").Set(p[0].Mep_T_Wall);
@@ -209,7 +199,7 @@ namespace Revit_Spec_VK
                 if (par == null || parCreator == null)
                     continue;
                 string value = GetParameterTypeValue(par, false);
-                if (value != "") continue;
+                if (value != "") continue;  //03.03.17 Пришел и попросил расскоментить,  а завтра ЦСКА проиграет бомжам
                 par.Set(GetParameterTypeValue(parCreator, false));
 
             }
@@ -231,6 +221,8 @@ namespace Revit_Spec_VK
                     string cat = categoryParam.CategoryName;
                     string type = doc.GetElement(elementCategory.GetTypeId()).Name;
                     string famName = "";
+                    if (cat == "Трубы" && elementCategory.LookupParameter("BS_Артикул")!=null)
+                        elementCategory.LookupParameter("BS_Артикул").Set("");
                     FamilySymbol fs = null;
                     if (elementCategory is FamilyInstance)
                     {
@@ -240,6 +232,7 @@ namespace Revit_Spec_VK
                     bool isSetParameter = false;
                     foreach (var filterParam in paramCatInfos.Where(x => x.CategoryName.Equals(cat)).ToList())
                     {
+                        
                         if (!filterParam.TypeName.Equals("") & !type.Equals(filterParam.TypeName))
                             if (filterParam.TypeName.Contains("*") & !(type.Contains(filterParam.TypeName.Replace("*", ""))))
                                 continue;
@@ -260,7 +253,7 @@ namespace Revit_Spec_VK
                                 par = doc.GetElement(elementCategory.GetTypeId()).LookupParameter(p.Name);
                             if (par == null)
                                 continue;
-                            string parValue = fw.GetParameterValue(par);
+                            string parValue = GetParameterTypeValue(par, false);
                             if (p.Value.Contains("*") & parValue.Contains(p.Value.Replace("*", "")))
                                 continue;
                             if (parValue == p.Value)
@@ -285,8 +278,6 @@ namespace Revit_Spec_VK
                                 continue; //Нет заполняемого параметра
                             }
                         }
-                        AnalyticalModelSurface sur = null;
-
                         isSetParameter = true;
                         if (paramToSet.IsReadOnly)
                         {
@@ -294,7 +285,7 @@ namespace Revit_Spec_VK
                             continue;
                         }
                         paramToSet.Set(filterParam.ParameterValue);
-                        break;
+                       // break;
                     }
                     if (!isSetParameter)
                     {
@@ -468,6 +459,8 @@ namespace Revit_Spec_VK
             string value = "";
             switch (parameter.StorageType)
             {
+                case StorageType.ElementId: 
+                    value = parameter.AsValueString(); break;
                 case StorageType.Double:
                     if (isCorner) value = Math.Round(parameter.AsDouble() * 180 / 3.14, 1).ToString();
                     else

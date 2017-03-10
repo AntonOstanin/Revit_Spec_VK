@@ -11,13 +11,13 @@
     <AssemblyName>Revit_Spec_VK</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AssemblyVersion>1.0.364.247</AssemblyVersion>
+    <AssemblyVersion>1.0.69.305</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>C:\Users\ostaninam\AppData\Roaming\Autodesk\Revit\Addins\2015\PIK\Спецификация ВК\</OutputPath>
+    <OutputPath>C:\Users\ostaninam\AppData\Roaming\Autodesk\Revit\Addins\2015\PIK\04_ENG\R4.01_Спецификация ВК\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -31,8 +31,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EPPlus">
-      <HintPath>C:\Users\ostaninam\AppData\Roaming\Autodesk\Revit\Addins\2015\EPPlus.dll</HintPath>
+    <Reference Include="EPPlus, Version=4.0.1.1, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\Revit_server\10. Dll's\Dll\EPPlus.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PluginStatistic">
+      <HintPath>Z:\Revit_server\10. Dll's\Dll\PluginStatistic.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="RevitAPI">
       <HintPath>C:\Program Files\Autodesk\Revit 2015\RevitAPI.dll</HintPath>
@@ -71,7 +77,7 @@
     <Compile Include="Util.cs" />
     <Compile Include="VK_Element.cs" />
     <Compile Include="ExternalApplication.cs" />
-    <Compile Include="ExternalCommands.cs" />
+    <Compile Include="Commands\ParamsVKSetter.cs" />
     <Compile Include="ExternalEventApplication.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>

@@ -14,10 +14,11 @@ namespace Revit_Spec_VK
         public string BS_Name { get; private set; }
         public string Note { get; private set; }
         public string FamilyName { get; private set; }
+        public string SystemType { get; private set; }
 
         public string FormulaParameter { get;  set; }
 
-        public VK_Element(string catName, string type, string detType, string bs_name,string familyName, string formulaParameter, string note)
+        public VK_Element(string catName, string type, string detType, string bs_name,string familyName, string formulaParameter, string note,string sysType)
         {
             this.CategoryName = catName;
             this.Type = type;
@@ -26,6 +27,7 @@ namespace Revit_Spec_VK
             this.FormulaParameter = formulaParameter;
             this.Note = note;
             this.FamilyName = familyName;
+            this.SystemType = sysType;
         }
     }
 

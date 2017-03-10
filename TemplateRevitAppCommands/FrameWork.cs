@@ -37,6 +37,8 @@ namespace Revit_Spec_VK
                     value = par.AsString();
                     break;
             }
+            if (value == null)
+                value = "";
             return value;
         }
 
@@ -124,22 +126,22 @@ namespace Revit_Spec_VK
                     string typeDet = Convert.ToString(ws.Cells[row, 3].Value).Trim();
                     string bsName = Convert.ToString(ws.Cells[row, 4].Value).Trim();
                     string fam = Convert.ToString(ws.Cells[row, 5].Value).Trim();
-                    string form = Convert.ToString(ws.Cells[row, 6].Value).Trim();
-                    string note = Convert.ToString(ws.Cells[row, 7].Value).Trim();
+                    string sysType = Convert.ToString(ws.Cells[row, 6].Value).Trim();
+                    string form = Convert.ToString(ws.Cells[row, 7].Value).Trim();
+                    string note = Convert.ToString(ws.Cells[row, 8].Value).Trim();
+                    var vkElEnter = vkElements.FirstOrDefault(x =>
+                        x.CategoryName.Equals(cat) && x.Type.Equals(type) && x.DetailType.Equals(typeDet) &&
+                        x.BS_Name.Equals(bsName) && x.FamilyName.Equals(fam) && x.SystemType.Equals(sysType));
 
-                    if (vkElements.Any(x =>
-                        x.CategoryName.Equals(cat) & x.Type.Equals(type) & x.DetailType.Equals(typeDet) &
-                        x.BS_Name.Equals(bsName) & x.FamilyName.Equals(fam)))
+                    if (vkElEnter!=null)
                     {
-                        ExternalCommands.errorMessages.Add(new ErrorMessage(string.Format("В Excel дублируется строка:" +
-                                                                                          "(Категория: \"{0}\",Тип: \"{1}\",Тип детали: \"{2}\",BS_: \"{3}\",Семейство: \"{4}\")",
-                                                                                          cat, type, typeDet, bsName, fam), new ElementId(0)));
-                        vkElements.First(x =>
-                            x.CategoryName.Equals(cat) & x.Type.Equals(type) & x.DetailType.Equals(typeDet) &
-                            x.BS_Name.Equals(bsName) & x.FamilyName.Equals(fam)).FormulaParameter = " ";
+                        ParamsVKSetter.errorMessages.Add(new ErrorMessage(string.Format("В Excel дублируется строка:" +
+                                                                                          "(Категория: \"{0}\",Тип: \"{1}\",Тип детали: \"{2}\",BS_:\"{3}\",Семейство: \"{4}\",Тип системы: \"{5}\")",
+                                                                                          cat, type, typeDet, bsName, fam,sysType), new ElementId(0)));
+                        vkElEnter.FormulaParameter = " ";
                         form = " ";
                     }
-                    else vkElements.Add(new VK_Element(cat, type, typeDet, bsName, fam, form, note));
+                    else vkElements.Add(new VK_Element(cat, type, typeDet, bsName, fam, form, note, sysType));
                     //  continue;
 
 
